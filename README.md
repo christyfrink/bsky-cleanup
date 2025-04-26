@@ -50,3 +50,32 @@ This will execute all the tests in the project and display the results.
 
 - Ensure your `config.json` file is not shared or committed to version control to protect your credentials.
 - The script uses the Bluesky API, so ensure your account has the necessary permissions to delete posts.
+
+## Setting Up GitHub Actions for Daily Cleanup
+
+To automate the cleanup script to run daily, follow these steps:
+
+1. **Add Repository Secrets**:
+   - Go to your GitHub repository.
+   - Navigate to `Settings` > `Secrets and variables` > `Actions`.
+   - Add the following secrets:
+     - `BSKY_BASE_URL`: The base URL for the Bluesky API (e.g., `https://bsky.social/xrpc`).
+     - `BSKY_HANDLE`: Your Bluesky handle.
+     - `BSKY_PASSWORD`: Your Bluesky password.
+
+2. **Verify the Workflow File**:
+   - Ensure the `.github/workflows/daily-cleanup.yml` file exists in your repository.
+   - This file is already configured to:
+     - Clone the repository.
+     - Create a `config.json` file using the repository secrets.
+     - Run the cleanup script daily at midnight UTC.
+
+3. **Enable GitHub Actions**:
+   - Ensure GitHub Actions is enabled for your repository.
+   - The workflow will automatically trigger daily based on the schedule defined in the `daily-cleanup.yml` file.
+
+4. **Monitor Workflow Runs**:
+   - Go to the `Actions` tab in your GitHub repository.
+   - Check the `Daily Cleanup` workflow to monitor its execution and logs.
+
+By setting this up, the cleanup script will run daily without manual intervention, ensuring your Bluesky posts are managed automatically.
