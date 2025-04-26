@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -129,14 +130,22 @@ func listPosts(cursor string) ([]Record, string, error) {
 
 func deleteRecord(record Record) error {
 	url := baseURL + "/com.atproto.repo.deleteRecord"
+
+	// Extract rkey from the record URI
+	uriParts := strings.Split(record.URI, "/")
+	rkey := uriParts[len(uriParts)-1]
+
 	payload := map[string]string{
-		"uri": record.URI,
-		"cid": record.CID,
+		"repo":       did,
+		"collection": "app.bsky.feed.post",
+		"rkey":       rkey, // Add the rkey property
+		"cid":        record.CID,
 	}
 	jsonPayload, _ := json.Marshal(payload)
 
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonPayload))
 	req.Header.Set("Authorization", "Bearer "+authToken)
+	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -146,7 +155,9 @@ func deleteRecord(record Record) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return errors.New("failed to delete record")
+		var responseBody bytes.Buffer
+		responseBody.ReadFrom(resp.Body)
+		return fmt.Errorf("failed to delete record: %s (status: %d, response: %s)", record.URI, resp.StatusCode, responseBody.String())
 	}
 
 	return nil
@@ -180,6 +191,7 @@ func (app *App) Run() {
 			createdAt, _ := time.Parse(time.RFC3339, record.Value.CreatedAt)
 			if time.Since(createdAt).Hours() > float64(config.DayCount*24) {
 				if err := app.DeleteRecord(record); err != nil {
+					fmt.Print(err)
 					fmt.Printf("Failed to delete record: %s\n", record.URI)
 				} else {
 					fmt.Printf("Deleted record: %s\n", record.URI)
