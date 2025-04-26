@@ -16,7 +16,7 @@ This script is designed to clean up Bluesky posts older than 30 days (by default
 ```
 
 - Replace `your-handle` with your Bluesky handle.
-- Replace `your-app-password` with a Bluesky app password (Generate from Bluesky settings > Privacy and Security > App Passowrds).
+- Replace `your-app-password` with a Bluesky app password (Generate from Bluesky settings > Privacy and Security > App Passwords).
 - Ensure `baseURL` is set to the correct API endpoint, such as `https://bsky.social/xrpc`.
 
 ## Usage
