@@ -9,14 +9,14 @@ This script is designed to clean up Bluesky posts older than 30 days (by default
 ```json
 {
   "handle": "your-handle",
-  "password": "your-password",
+  "password": "your-app-password",
   "baseURL": "https://bsky.social/xrpc",
   "dayCount": 30
 }
 ```
 
 - Replace `your-handle` with your Bluesky handle.
-- Replace `your-password` with your Bluesky password.
+- Replace `your-app-password` with a Bluesky app password (Generate from Bluesky settings > Privacy and Security > App Passowrds).
 - Ensure `baseURL` is set to the correct API endpoint, such as `https://bsky.social/xrpc`.
 
 ## Usage
@@ -61,7 +61,7 @@ To automate the cleanup script to run daily, follow these steps:
    - Add the following secrets:
      - `BSKY_BASE_URL`: The base URL for the Bluesky API (e.g., `https://bsky.social/xrpc`).
      - `BSKY_HANDLE`: Your Bluesky handle.
-     - `BSKY_PASSWORD`: Your Bluesky password.
+     - `BSKY_PASSWORD`: Your Bluesky app password.
 
 2. **Verify the Workflow File**:
    - Ensure the `.github/workflows/daily-cleanup.yml` file exists in your repository.
