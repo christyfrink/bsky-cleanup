@@ -1,5 +1,6 @@
 {
     "username": "XXXXX",
     "password": "XXXXX",
-    "baseURL": "https://bsky.social/xrpc"
+    "baseURL": "https://bsky.social/xrpc",
+    "dayCount": 30
 }

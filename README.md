@@ -62,6 +62,7 @@ To automate the cleanup script to run daily, follow these steps:
      - `BSKY_BASE_URL`: The base URL for the Bluesky API (e.g., `https://bsky.social/xrpc`).
      - `BSKY_HANDLE`: Your Bluesky handle.
      - `BSKY_PASSWORD`: Your Bluesky app password.
+     - `BSKY_DAY_COUNT`: Number of days to keep.
 
 2. **Verify the Workflow File**:
    - Ensure the `.github/workflows/daily-cleanup.yml` file exists in your repository.
