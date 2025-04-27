@@ -1,6 +1,6 @@
 {
-    "username": "XXXXX",
-    "password": "XXXXX",
+    "username": "example.org",
+    "password": "supersecretpassword",
     "baseURL": "https://bsky.social/xrpc",
     "dayCount": 30
 }

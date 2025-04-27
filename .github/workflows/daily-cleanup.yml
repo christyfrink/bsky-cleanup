@@ -21,12 +21,12 @@ jobs:
 
       - name: Create config.json
         run: |
-          echo "{\"baseURL\": \"$BSKY_BASE_URL\", \"handle\": \"$BSKY_HANDLE\", \"password\": \"$BSKY_PASSWORD\", \"dayCount\": $DAY_COUNT}" > config.json
+          echo "{\"baseURL\": \"$BSKY_BASE_URL\", \"handle\": \"$BSKY_HANDLE\", \"password\": \"$BSKY_PASSWORD\", \"dayCount\": $BSKY_DAY_COUNT}" > config.json
         env:
           BSKY_BASE_URL: ${{ secrets.BSKY_BASE_URL }}
           BSKY_HANDLE: ${{ secrets.BSKY_HANDLE }}
           BSKY_PASSWORD: ${{ secrets.BSKY_PASSWORD }}
-          DAY_COUNT: ${{ secrets.BSKY_DAY_COUNT }}
+          BSKY_DAY_COUNT: ${{ secrets.BSKY_DAY_COUNT }}
 
       - name: Run cleanup script
         run: go run bskycleanup.go

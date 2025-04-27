@@ -53,6 +53,8 @@ This will execute all the tests in the project and display the results.
 
 ## Setting Up GitHub Actions for Daily Cleanup
 
+[![Run Tests](https://github.com/stephenyeargin/bskycleanup/actions/workflows/ci.yml/badge.svg)](https://github.com/stephenyeargin/bskycleanup/actions/workflows/ci.yml)
+
 To automate the cleanup script to run daily, follow these steps:
 
 1. **Add Repository Secrets**:
@@ -62,7 +64,7 @@ To automate the cleanup script to run daily, follow these steps:
      - `BSKY_BASE_URL`: The base URL for the Bluesky API (e.g., `https://bsky.social/xrpc`).
      - `BSKY_HANDLE`: Your Bluesky handle.
      - `BSKY_PASSWORD`: Your Bluesky app password.
-     - `DAY_COUNT`: Number of days to keep.
+     - `BSKY_DAY_COUNT`: Number of days to keep.
 
 2. **Verify the Workflow File**:
    - Ensure the `.github/workflows/daily-cleanup.yml` file exists in your repository.
