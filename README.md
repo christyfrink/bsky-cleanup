@@ -1,5 +1,7 @@
 # Bluesky Cleanup Script
 
+[![Run Tests](https://github.com/stephenyeargin/bskycleanup/actions/workflows/ci.yml/badge.svg)](https://github.com/stephenyeargin/bskycleanup/actions/workflows/ci.yml)
+
 This script is designed to clean up Bluesky posts older than 30 days (by default). It authenticates with your Bluesky account and deletes posts that meet the criteria.
 
 ## Configuration
@@ -52,8 +54,6 @@ This will execute all the tests in the project and display the results.
 - The script uses the Bluesky API, so ensure your account has the necessary permissions to delete posts.
 
 ## Setting Up GitHub Actions for Daily Cleanup
-
-[![Run Tests](https://github.com/stephenyeargin/bskycleanup/actions/workflows/ci.yml/badge.svg)](https://github.com/stephenyeargin/bskycleanup/actions/workflows/ci.yml)
 
 To automate the cleanup script to run daily, follow these steps:
 
