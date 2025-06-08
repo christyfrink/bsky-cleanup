@@ -76,6 +76,7 @@ To automate the cleanup script to run daily, follow these steps:
      - `BSKY_HANDLE`: Your Bluesky handle.
      - `BSKY_PASSWORD`: Your Bluesky app password.
      - `BSKY_DAY_COUNT`: Number of days to keep.
+     - (Optional) `BSKY_FLAGS`: Specify record types for deletion with the flags mentioned above.
 
 2. **Verify the Workflow File**:
    - Ensure the `.github/workflows/daily-cleanup.yml` file exists in your repository.

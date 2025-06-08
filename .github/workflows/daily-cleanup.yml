@@ -29,4 +29,7 @@ jobs:
           BSKY_DAY_COUNT: ${{ secrets.BSKY_DAY_COUNT }}
 
       - name: Run cleanup script
-        run: go run bskycleanup.go
+        run: |
+          go run bskycleanup.go ${BSKY_FLAGS:-}
+        env:
+          BSKY_FLAGS: ${{ secrets.BSKY_FLAGS }}
