@@ -38,7 +38,7 @@ func TestLogin(t *testing.T) {
 	}
 }
 
-func TestListPosts(t *testing.T) {
+func TestListRecords(t *testing.T) {
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/com.atproto.repo.listRecords" {
 			w.WriteHeader(http.StatusOK)
@@ -67,9 +67,9 @@ func TestListPosts(t *testing.T) {
 	defer server.Close()
 
 	baseURL = server.URL
-	records, cursor, err := listPosts("")
+	records, cursor, err := listRecords("", "post")
 	if err != nil {
-		t.Fatalf("listPosts failed: %v", err)
+		t.Fatalf("listRecords failed: %v", err)
 	}
 
 	if len(records) != 1 || cursor != "nextCursor" {
@@ -95,7 +95,7 @@ func TestDeleteRecord(t *testing.T) {
 		CID: "mockCID",
 	}
 
-	if err := deleteRecord(record); err != nil {
+	if err := deleteRecord(record, ""); err != nil {
 		t.Fatalf("deleteRecord failed: %v", err)
 	}
 }
@@ -139,11 +139,12 @@ func TestLoadConfig(t *testing.T) {
 
 func TestMainFeedback(t *testing.T) {
 	app := &App{
+		AppFlags: AppFlags{OnlyPosts: true},
 		Login: func() error {
 			return nil
 		},
-		ListPosts: func(cursor string) ([]Record, string, error) {
-			if cursor == "" {
+		ListRecords: func(cursor string, recordType string) ([]Record, string, error) {
+			if cursor == "" && recordType == "post" {
 				return []Record{
 					{
 						URI: "mockURI1",
@@ -156,11 +157,11 @@ func TestMainFeedback(t *testing.T) {
 							Text:      "Old post",
 						},
 					},
-				}, "nextCursor", nil
+				}, "", nil
 			}
 			return nil, "", nil
 		},
-		DeleteRecord: func(record Record) error {
+		DeleteRecord: func(record Record, collection string) error {
 			if record.URI == "mockURI1" {
 				return nil
 			}
@@ -187,9 +188,8 @@ func TestMainFeedback(t *testing.T) {
 	os.Stdout = originalStdout
 	<-done
 
-	// Check output
-	if !strings.Contains(output.String(), "Deleted record: mockURI1") {
-		t.Errorf("Expected feedback for deleted record, got: %s", output.String())
+	if !strings.Contains(output.String(), "Deleted post: mockURI1") {
+		t.Errorf("Expected feedback for deleted post, got: %s", output.String())
 	}
 
 	if !strings.Contains(output.String(), "Total posts deleted: 1") {
@@ -202,8 +202,8 @@ func TestDayCountSetting(t *testing.T) {
 		Login: func() error {
 			return nil
 		},
-		ListPosts: func(cursor string) ([]Record, string, error) {
-			if cursor == "" {
+		ListRecords: func(cursor string, collection string) ([]Record, string, error) {
+			if cursor == "" && collection == "post" {
 				return []Record{
 					{
 						URI: "mockURI1",
@@ -231,8 +231,8 @@ func TestDayCountSetting(t *testing.T) {
 			}
 			return nil, "", nil
 		},
-		DeleteRecord: func(record Record) error {
-			if record.URI == "mockURI2" {
+		DeleteRecord: func(record Record, collection string) error {
+			if record.URI == "mockURI2" && collection == "post" {
 				return nil
 			}
 			return errors.New("failed to delete record")
@@ -261,12 +261,11 @@ func TestDayCountSetting(t *testing.T) {
 	os.Stdout = originalStdout
 	<-done
 
-	// Check output
-	if strings.Contains(output.String(), "Deleted record: mockURI1") {
+	if strings.Contains(output.String(), "Deleted post: mockURI1") {
 		t.Errorf("Expected recent post (mockURI1) to not be deleted, but it was.")
 	}
 
-	if !strings.Contains(output.String(), "Deleted record: mockURI2") {
+	if !strings.Contains(output.String(), "Deleted post: mockURI2") {
 		t.Errorf("Expected old post (mockURI2) to be deleted, but it was not.")
 	}
 

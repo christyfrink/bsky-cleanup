@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
@@ -92,10 +93,10 @@ func login() error {
 	return nil
 }
 
-func listPosts(cursor string) ([]Record, string, error) {
+func listRecords(cursor, collection string) ([]Record, string, error) {
 	url := baseURL + "/com.atproto.repo.listRecords"
 
-	queryParams := "?repo=" + did + "&collection=app.bsky.feed.post"
+	queryParams := "?repo=" + did + "&collection=app.bsky.feed." + collection
 	if cursor != "" {
 		queryParams += "&cursor=" + cursor
 	}
@@ -114,7 +115,7 @@ func listPosts(cursor string) ([]Record, string, error) {
 	if resp.StatusCode != http.StatusOK {
 		var responseBody bytes.Buffer
 		responseBody.ReadFrom(resp.Body)
-		return nil, "", errors.New("failed to list posts: " + responseBody.String())
+		return nil, "", errors.New("failed to list records: " + responseBody.String())
 	}
 
 	var result struct {
@@ -128,7 +129,7 @@ func listPosts(cursor string) ([]Record, string, error) {
 	return result.Records, result.Cursor, nil
 }
 
-func deleteRecord(record Record) error {
+func deleteRecord(record Record, collection string) error {
 	url := baseURL + "/com.atproto.repo.deleteRecord"
 
 	// Extract rkey from the record URI
@@ -137,8 +138,8 @@ func deleteRecord(record Record) error {
 
 	payload := map[string]string{
 		"repo":       did,
-		"collection": "app.bsky.feed.post",
-		"rkey":       rkey, // Add the rkey property
+		"collection": "app.bsky.feed." + collection,
+		"rkey":       rkey,
 		"cid":        record.CID,
 	}
 	jsonPayload, _ := json.Marshal(payload)
@@ -157,16 +158,65 @@ func deleteRecord(record Record) error {
 	if resp.StatusCode != http.StatusOK {
 		var responseBody bytes.Buffer
 		responseBody.ReadFrom(resp.Body)
-		return fmt.Errorf("failed to delete record: %s (status: %d, response: %s)", record.URI, resp.StatusCode, responseBody.String())
+		return fmt.Errorf("Failed to delete %s: %s (status: %d, response: %s)", collection, record.URI, resp.StatusCode, responseBody.String())
 	}
 
 	return nil
 }
 
+var flagsParsed bool
+
+type AppFlags struct {
+	OnlyPosts    bool
+	OnlyReposts  bool
+	OnlyLikes    bool
+	IncludeLikes bool
+}
+
+func getFlags() AppFlags {
+	if !flagsParsed {
+		flag.Bool("only-posts", false, "delete posts")
+		flag.Bool("only-reposts", false, "delete reposts")
+		flag.Bool("only-likes", false, "delete likes")
+		flag.Bool("include-likes", false, "include likes with posts and reposts")
+
+		flag.Parse()
+		flagsParsed = true
+	}
+
+	return AppFlags{
+		OnlyPosts:    flag.Lookup("only-posts").Value.(flag.Getter).Get().(bool),
+		OnlyReposts:  flag.Lookup("only-reposts").Value.(flag.Getter).Get().(bool),
+		OnlyLikes:    flag.Lookup("only-likes").Value.(flag.Getter).Get().(bool),
+		IncludeLikes: flag.Lookup("include-likes").Value.(flag.Getter).Get().(bool),
+	}
+}
+
+func setTypes(flags AppFlags) []string {
+	var recordTypes []string
+	defaultTypes := []string{"post", "repost"}
+
+	switch {
+	case flags.OnlyPosts:
+		recordTypes = []string{"post"}
+	case flags.OnlyReposts:
+		recordTypes = []string{"repost"}
+	case flags.OnlyLikes:
+		recordTypes = []string{"like"}
+	case flags.IncludeLikes:
+		recordTypes = append(defaultTypes, "like")
+	default:
+		recordTypes = defaultTypes
+	}
+
+	return recordTypes
+}
+
 type App struct {
 	Login        func() error
-	ListPosts    func(cursor string) ([]Record, string, error)
-	DeleteRecord func(record Record) error
+	AppFlags     AppFlags
+	ListRecords  func(cursor string, collection string) ([]Record, string, error)
+	DeleteRecord func(record Record, collection string) error
 }
 
 func (app *App) Run() {
@@ -178,49 +228,56 @@ func (app *App) Run() {
 		panic("Failed to login: " + err.Error())
 	}
 
-	cursor := ""
-	deletedCount := 0
-	skippedCount := 0 // Count of posts not deleted because they were newer
-	for {
-		records, nextCursor, err := app.ListPosts(cursor)
-		if err != nil {
-			panic("Failed to list posts: " + err.Error())
-		}
+	recordTypes := setTypes(app.AppFlags)
 
-		for _, record := range records {
-			createdAt, _ := time.Parse(time.RFC3339, record.Value.CreatedAt)
-			if time.Since(createdAt).Hours() > float64(config.DayCount*24) {
-				if err := app.DeleteRecord(record); err != nil {
-					fmt.Print(err)
-					fmt.Printf("Failed to delete record: %s\n", record.URI)
-				} else {
-					fmt.Printf("Deleted record: %s\n", record.URI)
-					deletedCount++
-				}
-			} else {
-				skippedCount++
+	for _, recordType := range recordTypes {
+		types := recordType + "s"
+		cursor := ""
+		deletedCount := 0
+		recordCount := 0
+		for {
+			records, nextCursor, err := app.ListRecords(cursor, recordType)
+			if err != nil {
+				panic("Failed to list " + types + ": " + err.Error())
 			}
+
+			recordCount += len(records)
+			for _, record := range records {
+
+				createdAt, _ := time.Parse(time.RFC3339, record.Value.CreatedAt)
+				if time.Since(createdAt).Hours() > float64(config.DayCount*24) {
+					if err := app.DeleteRecord(record, recordType); err != nil {
+						fmt.Print(err)
+						fmt.Printf("Failed to delete %s: %s\n", recordType, record.URI)
+					} else {
+						deletedCount++
+						fmt.Printf("Deleted %s: %s\n", recordType, record.URI)
+					}
+				}
+			}
+
+			if nextCursor == "" {
+				if deletedCount == 0 {
+					fmt.Printf("No %s were deleted.\n", types)
+				} else {
+					fmt.Printf("Total %s deleted: %d\n", types, deletedCount)
+				}
+				fmt.Printf("Total %s skipped (newer than %d days): %d\n", recordType+"s", config.DayCount, recordCount-deletedCount)
+				break
+			}
+
+			cursor = nextCursor
 		}
-
-		if nextCursor == "" {
-			break
-		}
-		cursor = nextCursor
 	}
-
-	if deletedCount == 0 {
-		fmt.Println("No posts were deleted.")
-	} else {
-		fmt.Printf("Total posts deleted: %d\n", deletedCount)
-	}
-
-	fmt.Printf("Total posts skipped (newer than %d days): %d\n", config.DayCount, skippedCount)
 }
 
 func main() {
+	appFlags := getFlags()
+
 	app := &App{
 		Login:        login,
-		ListPosts:    listPosts,
+		AppFlags:     appFlags,
+		ListRecords:  listRecords,
 		DeleteRecord: deleteRecord,
 	}
 	app.Run()
