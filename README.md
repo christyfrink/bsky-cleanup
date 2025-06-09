@@ -38,6 +38,17 @@ go run bskycleanup.go
 
 The script will authenticate with your Bluesky account and delete posts older than 30 days.
 
+## How to Specify Record Types for Deletion
+
+By default, `posts` and `reposts` are deleted. Add any _one_ of these flags when running the script to fine-tune the records deleted.
+
+`only-posts`
+`only-reposts`
+`only-likes`
+`include-likes`
+
+Please note that these flags are listed in the order they are in the `switch` statement.  If, for example, you pass in `--only-posts` and `--include-likes`, the only flag that will be used is `--only-posts`.
+
 ## Running the Test Suite
 
 1. To run the test suite, use the following command:
@@ -65,6 +76,7 @@ To automate the cleanup script to run daily, follow these steps:
      - `BSKY_HANDLE`: Your Bluesky handle.
      - `BSKY_PASSWORD`: Your Bluesky app password.
      - `BSKY_DAY_COUNT`: Number of days to keep.
+     - (Optional) `BSKY_FLAGS`: Specify record types for deletion with the flags mentioned above.
 
 2. **Verify the Workflow File**:
    - Ensure the `.github/workflows/daily-cleanup.yml` file exists in your repository.
